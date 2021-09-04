@@ -1,5 +1,8 @@
 import asyncio
-from fastapi import FastAPI, Form, File, UploadFile
+import codecs
+import sys
+import re
+from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import Response
 
 
@@ -16,13 +19,54 @@ def index_page():
 
 
 @app.post("/read")
-async def create_file(input_file: UploadFile = File(...)):
-    """"""
-    file_content = await input_file.read()
-    print(file_content)
-    response = {
-        "file_size": len(input_file),
-        "fileb_content_type": input_file.content_type,
-    }
-    print("Responce:", response)
+async def read_file(input_file: UploadFile = File(...)):
+    """Принимает файл из формы и читает его."""
+    
+    if input_file:
+        file_content = await input_file.read()
+        file_content = codecs.decode(file_content, encoding='utf-8', errors='ignore')
+        file_parse(file_content)
+    else:
+        return Response(404, media_type='text/')
+    
+
+def file_parse(file: str):
+    """Формирует список 50 самых частых слов в тексте."""
+    
+    
+    input_string = ' '.join(file.split()).replace('\n', '').lower()
+    data = re.sub(r'[^\w\s]', '', input_string)
+    data = re.sub(r'\s\w{1,2}\s', ' ', data).split(" ")   
+    
+    
+    divider = len(data)
+    reference = sorted(list(set(data)))
+
+    # Считаем словом всё, что не меньше 2 символов.
+    for word in reference:
+        if len(word) < 2:
+            reference.remove(word)
+
+    dic = {}
+    for word in reference:
+        tf = data.count(word)/divider
+        if tf not in dic.keys():
+            dic[tf] = []
+            dic[tf].append(word)
+        else:
+            dic[tf].append(word)
+
+    sorted_dic = {}
+    for i in sorted(dic.keys(), reverse=True):
+        sorted_dic[i] = dic[i]
+    del(dic)
+    print(sorted_dic)
+
+    result = {}
+    for i in sorted_dic.keys():
+        for j in sorted_dic[i]:
+            result[str(j)] = str(i)
+
+    print(result)
+
     
