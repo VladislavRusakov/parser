@@ -1,6 +1,4 @@
-import asyncio
 import codecs
-import sys
 import re
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import Response
@@ -24,27 +22,25 @@ async def read_file(input_file: UploadFile = File(...)):
     
     if input_file:
         file_content = await input_file.read()
-        file_content = codecs.decode(file_content, encoding='utf-8', errors='ignore')
-        file_parse(file_content)
+        file_content = codecs.decode(file_content, encoding='utf-8', errors='replace')
+        return {"Word":"TF"}, file_parse(file_content)
     else:
         return Response(404, media_type='text/')
     
 
 def file_parse(file: str):
     """Формирует список 50 самых частых слов в тексте."""
-    
-    
+    print(file)
     input_string = ' '.join(file.split()).replace('\n', '').lower()
     data = re.sub(r'[^\w\s]', '', input_string)
     data = re.sub(r'\s\w{1,2}\s', ' ', data).split(" ")   
-    
-    
+
     divider = len(data)
     reference = sorted(list(set(data)))
 
     # Считаем словом всё, что не меньше 2 символов.
     for word in reference:
-        if len(word) < 2:
+        if len(word) < 2 or str(word).isdigit():
             reference.remove(word)
 
     dic = {}
@@ -60,13 +56,12 @@ def file_parse(file: str):
     for i in sorted(dic.keys(), reverse=True):
         sorted_dic[i] = dic[i]
     del(dic)
-    print(sorted_dic)
 
     result = {}
     for i in sorted_dic.keys():
         for j in sorted_dic[i]:
             result[str(j)] = str(i)
 
-    print(result)
+    return result
 
     
