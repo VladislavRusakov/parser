@@ -1,28 +1,26 @@
 import codecs
 import re
-from fastapi import FastAPI, File, UploadFile
-from fastapi.templating import Jinja2Templates
+from fastapi import FastAPI, File, UploadFile, Response
 
 
-TEMPLATES = Jinja2Templates(directory='templates')
 app = FastAPI()
 
 
 @app.get("/")
 def index_page():
     """Рендер главной страницы"""
-    return TEMPLATES.TemplateResponse('index.html') 
+    with open('templates/index.html', 'r') as f:
+        index_page = f.read()
+    return Response(index_page, media_type='text/html')
 
 
 @app.post("/read")
 async def read_file(input_file: UploadFile = File(...)):
     """Принимает файл из формы и читает его."""
-
     file_content = await input_file.read()
     file_content = codecs.decode(file_content, encoding='utf-8', errors='replace')
     return {"Word":"TF"}, file_parse(file_content)
 
-    
 
 def file_parse(file: str):
     """Формирует список 50 самых частых слов в тексте."""
